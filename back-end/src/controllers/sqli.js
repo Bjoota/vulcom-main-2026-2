@@ -10,7 +10,9 @@ controller.login = async function(req, res) {
   // Não reutilizar este padrão em código de produção.
   // OWASP Top 10:2025 A05 - Injeção (SQL Injection):
   // entradas concatenadas ao SQL são executadas por $queryRawUnsafe como parte da consulta.
-  const query = `SELECT * FROM "User" WHERE username = '${username}' AND password = '${password}'`
+
+  //Aluno: Correção de vulnerabilidades.
+const users = await prisma.$queryRaw`SELECT * FROM "User" WHERE username = ${username} AND password = ${password}`
 
   // OWASP Top 10:2025 A09 - Falhas nos Logs de Segurança e no Sistema de Alertas:
   // a consulta registrada contém as credenciais informadas, incluindo a senha.
