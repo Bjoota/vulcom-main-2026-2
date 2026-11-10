@@ -11,9 +11,22 @@
         
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <--  ***Corrçeãp XSS   -->
-   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <!-- *** SOLUÇÃO XSS 1: Configuração de CSP *** -->
+    
+   
+    <!--meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'"-->
 
+
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self';
+        style-src 'self' 'unsafe-inline';
+        connect-src 'self' http://localhost:8888 ws://localhost:8080 wss://*.app.github.dev;
+      "
+    >
+  
     <title>Projeto VULCOM &bull; vulnerabilidades comuns</title>
   </head>
   <body>
