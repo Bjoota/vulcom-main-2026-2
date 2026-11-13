@@ -28,13 +28,14 @@ controller.create = async function(req, res) {
 
 controller.retrieveAll = async function(req, res) {
   try {
-    // OWASP Top 10:2025 A01 - Falha no Controle de Acesso:
-    // a consulta expõe todos os campos dos usuários, incluindo a senha em texto puro (A04).
     const result = await prisma.user.findMany()
 
-    // HTTP 200: OK (implícito)
+    // Remove a senha de todos os usuários retornados
+    result.forEach(user => delete user.password)
+
     res.send(result)
   }
+
   catch(error) {
     console.error(error)
 
@@ -45,15 +46,15 @@ controller.retrieveAll = async function(req, res) {
 
 controller.retrieveOne = async function(req, res) {
   try {
-    // OWASP Top 10:2025 A01 - Falha no Controle de Acesso:
-    // o ID recebido permite consultar qualquer usuário, incluindo seu campo password.
     const result = await prisma.user.findUnique({
       where: { id: Number(req.params.id) }
     })
 
-    // Encontrou ~> retorna HTTP 200: OK (implícito)
-    if(result) res.send(result)
-    // Não encontrou ~> retorna HTTP 404: Not Found
+    if(result) {
+      // Remove a senha do usuário retornado
+      delete result.password
+      res.send(result)
+    }
     else res.status(404).end()
   }
   catch(error) {
