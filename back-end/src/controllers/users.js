@@ -1,5 +1,7 @@
 import prisma from '../database/client.js'
 import jwt from 'jsonwebtoken'
+import argon2 from 'argon2'
+
 
 const controller = {}     // Objeto vazio
 
@@ -9,6 +11,8 @@ controller.create = async function(req, res) {
     // OWASP Top 10:2025 A01 - Falha no Controle de Acesso:
     // atribuição em massa permite ao cliente definir campos sensíveis, como is_admin.
     // OWASP Top 10:2025 A04 - Falhas de Criptografia: password é persistido sem hash.
+    req.body.password = await argon2.hash(req.body.password)
+
     await prisma.user.create({ data: req.body })
 
     // HTTP 201: Created
@@ -66,6 +70,10 @@ controller.update = async function(req, res) {
     // OWASP Top 10:2025 A01 - Falha no Controle de Acesso:
     // o cliente pode alterar is_admin e password de qualquer usuário por atribuição em massa.
     // OWASP Top 10:2025 A04 - Falhas de Criptografia: a nova senha também é gravada sem hash.
+     if(req.body.password) {
+      req.body.password = await argon2.hash(req.body.password)
+    }
+
     const result = await prisma.user.update({
       where: { id: Number(req.params.id) },
       data: req.body
@@ -131,12 +139,10 @@ controller.login = async function(req, res) {
       // a credencial fixa admin/admin123 ignora a senha cadastrada para esse usuário.
       // OWASP Top 10:2025 A04 - Falhas de Criptografia:
       // a comparação direta usa a senha armazenada em texto puro, sem hash adaptativo.
-      let passwordIsValid
-      if(req.body?.username === 'admin' && req.body?.password === 'admin123') passwordIsValid = true
-      else passwordIsValid = user.password === req.body?.password
+     // Verifica se a senha enviada bate com o hash do banco:
+      const passwordIsValid = await argon2.verify(user.password, req.body?.password)
 
-      // Se a senha estiver errada, retorna
-      // HTTP 401: Unauthorized
+      // Se a senha estiver errada, retorna HTTP 401: Unauthorized
       if(! passwordIsValid) return res.status(401).end()
 
       // Usuário e senha OK, passamos ao procedimento de gerar o token
